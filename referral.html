@@ -231,14 +231,14 @@
     // دالة للمشاركة
     function shareReferral() {
       const referralCode = document.getElementById("referral-code").innerText;
-      const shareText = `استخدم كود الإحالة الخاص بي: ${referralCode} واحصل على مكافآت عند التسجيل. حمل التطبيق من هنا: https://apk.e-droid.net/apk/app3328540-zo5cdf.apk?v=2`;
+      const shareText = `استخدم كود الإحالة الخاص بي: ${referralCode} واحصل على مكافآت عند التسجيل. حمل التطبيق من هنا: `;
     
       // تحقق من دعم خاصية المشاركة
       if (navigator.share) {
         navigator.share({
           title: 'تحميل التطبيق',
           text: shareText,
-          url: 'https://cat-clik.netlify.app/'
+          url: 'https://uopwallet-clik.netlify.app/'
         }).then(() => {
           openPopup("تمت مشاركة كود الإحالة بنجاح!");
         }).catch((error) => {

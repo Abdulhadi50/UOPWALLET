@@ -1,14 +1,177 @@
 <!DOCTYPE html>
-<html>
-
+<html lang="ar">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title></title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>استرداد الكود</title>
+    <script src="https://www.gstatic.com/firebasejs/8.3.3/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.3.3/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.3.3/firebase-firestore.js"></script>
+    <style>
+        body {
+            font-family: 'Cairo', sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #fff;
+            text-align: center;
+            direction: rtl;
+            user-select: none;
+        }
+        .container {
+            margin-top: 50px;
+            padding: 20px;
+            display: inline-block;
+            width: 90%;
+            max-width: 350px;
+        }
+        
+        input {
+          width: 80%;
+          padding: 15px;
+          font-size: 15px;
+          border: 1px solid #ccc;
+          border-radius: 15px;
+          outline: none;
+          margin-top: 20px;
+        }
+        
+        input:focus {
+          border-color: #0E43F1;
+        }
+        
+        button {
+          width: 100%;
+          padding: 10px;
+          background: linear-gradient(to right, #0E43F1, #0E43F1);
+          border: none;
+          border-radius: 15px;
+          color: #FFF;
+          font-size: 16px;
+          transition: background-color 0.3s;
+          margin-top: 50px;
+        }
+        
+        /* تصميم النافذة المنبثقة */
+        .popup {
+            display: none;
+            position: fixed;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.6);
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .popup-content {
+            background-color: white;
+            border-radius: 25px;
+            padding: 30px;
+            text-align: center;
+            width: 80%;
+            max-width: 400px;
+            position: relative;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.2);
+        }
+
+        .close-btn {
+            position: absolute;
+            top: 10px;
+            right: 15px;
+            font-size: 24px;
+            color: #000;
+        }
+
+    </style>
 </head>
 
 <body>
+    <div class="container">
+        <h2>استرداد الكود</h2>
+        <input type="text" id="codeInput" placeholder="أدخل كود الاسترداد" required>
+        <button onclick="redeemCode()">استرداد</button>
+    </div>
 
+    <!-- نافذة منبثقة -->
+    <div class="popup" id="popup">
+        <div class="popup-content">
+            <span class="close-btn" onclick="closePopup()">×</span>
+            <p id="popup-message">رسالة منبثقة</p>
+            <button onclick="closePopup()">إغلاق</button>
+        </div>
+    </div>
+
+    <script>
+        // إعداد Firebase
+        const firebaseConfig = {
+            apiKey: "AIzaSyADJJPRxJhItXVJ2cEsIymB1WuVVDpQlHI",
+            authDomain: "telegram-mini-app-c3189.firebaseapp.com",
+            projectId: "telegram-mini-app-c3189",
+            storageBucket: "telegram-mini-app-c3189.appspot.com",
+            messagingSenderId: "1078003355289",
+            appId: "1:1078003355289:web:99ce2ce7471a6e5595f208"
+        };
+
+        // تهيئة Firebase
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+
+        // دالة لفتح النافذة المنبثقة
+        function openPopup(message) {
+            document.getElementById('popup-message').innerText = message;
+            document.getElementById('popup').style.display = 'flex';
+        }
+
+        // دالة لإغلاق النافذة المنبثقة
+        function closePopup() {
+            document.getElementById('popup').style.display = 'none';
+        }
+
+        // دالة لاسترداد الكود
+        function redeemCode() {
+            const user = firebase.auth().currentUser;
+            if (!user) {
+                openPopup("يجب تسجيل الدخول لاسترداد الكود.");
+                return;
+            }
+
+            const code = document.getElementById("codeInput").value;
+
+            // استرجاع الأكواد من Firestore
+            db.collection("redemptionCodes").where("code", "==", code).get().then((querySnapshot) => {
+                if (querySnapshot.empty) {
+                    openPopup("الكود غير صالح.");
+                    return;
+                }
+
+                querySnapshot.forEach((doc) => {
+                    const codeData = doc.data();
+                    if (codeData.isUsed) {
+                        openPopup("هذا الكود قد تم استخدامه بالفعل.");
+                    } else {
+                        // تحديث رصيد المستخدم
+                        const amount = codeData.amount; // افترض أن لديك حقل `amount` لتحديد عدد النقاط
+                        const userRef = db.collection("users").doc(user.uid);
+                        userRef.update({
+                            balance: firebase.firestore.FieldValue.increment(amount)
+                        }).then(() => {
+                            // تحديث حالة الكود إلى مستخدم
+                            doc.ref.update({
+                                isUsed: true,
+                                usedBy: user.uid // تخزين معرف المستخدم الذي استخدم الكود
+                            });
+                            openPopup(`تم استرداد الكود بنجاح! تمت إضافة ${amount} إلى رصيدك.`);
+                        }).catch((error) => {
+                            openPopup("خطأ في تحديث الرصيد: " + error.message);
+                        });
+                    }
+                });
+            }).catch((error) => {
+                openPopup("خطأ في استرجاع الكود: " + error.message);
+            });
+        }
+    </script>
 </body>
-
 </html>

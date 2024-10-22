@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>الملف الشخصي</title>
+    <script src="https://www.gstatic.com/firebasejs/8.3.3/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.3.3/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.3.3/firebase-firestore.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #fff;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+        .profile-container {
+            background-color: #fff;
+            width: 350px;
+            padding: 10px;
+        }
+        .profile-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        .profile-header h2 {
+            font-size: 18px;
+            color: #333;
+        }
+        .verification-icon {
+            width: 20px;
+            height: 20px;
+        }
+        .profile-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding: 10px;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            background-color: #fafafa;
+        }
+        .profile-item label {
+            font-size: 14px;
+            color: #555;
+        }
+        .copy-icon {
+            
+            width: 20px;
+            height: 20px;
+        }
+        .button {
+            width: 100%;
+            background-color: #0E43F1;
+            color: white;
+            padding: 10px 0;
+            text-align: center;
+            border: none;
+            border-radius: 8px;
+            margin-top: 10px;
+        }
+        .button:hover {
+            background-color: #0c3ac1;
+        }
+        .popup {
+            display: none;
+            position: fixed;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.6);
+            justify-content: center;
+            align-items: center;
+        }
+        .popup button {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 15px;
+            background: linear-gradient(to right, #0E43F1, #0E43F1, #0E43F1);
+            color: white;
+            font-size: 16px;
+            margin-top: 15px;
+        }
+        .popup-content {
+            background-color: white;
+            border-radius: 15px;
+            padding: 30px;
+            text-align: center;
+            width: 80%;
+            max-width: 400px;
+            position: relative;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.2);
+        }
+        .close-btn {
+            position: absolute;
+            top: 10px;
+            right: 15px;
+            font-size: 24px;
+            color: #000;
+        }
+        .alert {
+            color: red;
+            font-size: 12px;
+            margin-top: 50px;
+            text-align: center;
+        }
+        
+        .text {
+          color: #000;
+          font-size: 15px;
+          margin-top: 20px;
+          text-align: center;
+          padding: 10px;
+        }
+        
+        .whatsapp-btn {
+          width: 100%;
+            margin-top: 20px;
+            background-color: #383E57;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 10px;
+            border: none;
+            border-radius: 15px;
+            color: white;
+            font-size: 16px;
+            text-align: center;
+            transition: background-color 0.3s;
+        }
+        .whatsapp-btn img {
+            margin-left: 10px;
+            width: 25px;
+            height: 25px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="profile-container">
+  
+  <p class="text">
+    يتم اضافة الاموال الخاصة بك بعد فحص المعاملات و التاكد من المبلغ المرسل و المعرف الخاص بك ازا كان ضمن المعاملة يتم اضافة الأموال الى رصيد مباشر 
+  </p>
+  
+  <!-- User ID with Copy -->
+  <div class="profile-item">
+      <label>المعرف الخاص بك</label>
+      <div>
+          <span id="uniqueId">UID</span>
+          <img src="https://img.icons8.com/ios-glyphs/999/copy.png" class="copy-icon" onclick="copyToClipboard('uniqueId')" />
+      </div>
+  </div>
+
+  <!-- Name with Copy -->
+  <div class="profile-item">
+      <label>الاسم</label>
+      <div>
+          <span id="name">Abdulhadi Hacı Zübeyde</span>
+          <img src="https://img.icons8.com/ios-glyphs/999/copy.png" class="copy-icon" onclick="copyToClipboard('name')" />
+      </div>
+  </div>
+
+  <!-- IBAN with Copy -->
+  <div class="profile-item">
+      <label>IBAN</label>
+      <div>
+          <span id="iban">TR84 0082 9000 0949 1636 0501 10</span>
+          <img src="https://img.icons8.com/ios-glyphs/999/copy.png" class="copy-icon" onclick="copyToClipboard('iban')" />
+      </div>
+  </div>
+    <div class="profile-item">
+      <label>BANK</label>
+      <div>
+        <span id="bank">PAPARA</span>
+        <img src="https://img.icons8.com/ios-glyphs/999/copy.png" class="copy-icon" onclick="copyToClipboard('bank')" />
+      </div>
+    </div>
+  <p class="alert">يجب إدخال معرف المستخدم الخاص بك في وصل التحويل لإضافة المعاملة الخاصة بك بنجاح. إذا لم تدخله، ستفقد أموالك.
+  تأكد من ادخال معرفك في هذا القسم داخل البنك الخاص بك 
+  (Açıklama)</p>
+
+  <!-- WhatsApp Button -->
+  <button class="whatsapp-btn" onclick="contactWhatsApp()">
+     تواصل معنا ازا واجهت مشاكل
+      <img src="https://img.icons8.com/color/999/whatsapp--v1.png">
+  </button>
+
+</div>
+
+<!-- Popup -->
+<div class="popup" id="popup">
+    <div class="popup-content">
+        <span class="close-btn" onclick="closePopup()">&times;</span>
+        <p id="popupMessage">تم نسخ البيانات إلى الحافظة!</p>
+        <button onclick="closePopup()">موافق</button>
+    </div>
+</div>
+
+<script>
+    // Firebase Configuration
+    const firebaseConfig = {
+      apiKey: "AIzaSyADJJPRxJhItXVJ2cEsIymB1WuVVDpQlHI",
+      authDomain: "telegram-mini-app-c3189.firebaseapp.com",
+      projectId: "telegram-mini-app-c3189",
+      storageBucket: "telegram-mini-app-c3189.appspot.com",
+      messagingSenderId: "1078003355289",
+      appId: "1:1078003355289:web:99ce2ce7471a6e5595f208"
+    };
+
+    // Initialize Firebase
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const db = firebase.firestore();
+
+    // Get current user and update UI
+    auth.onAuthStateChanged(user => {
+        if (user) {
+            const uid = user.uid;
+
+            // Fetch user data from Firestore
+            db.collection("users").doc(uid).get().then(doc => {
+                if (doc.exists) {
+                    const data = doc.data();
+                    document.getElementById.innerText = data.name || "Abdulhadi Hacı Zübeyde";
+                    document.getElementById("uniqueId").innerText = data.uniqueId;
+                    document.getElementById("iban").innerText = data.iban || "TR84 0082 9000 0949 1636 0501 10";
+                    document.getElementById("bank").innerText = data.iban || "PAPARA";
+
+                    // Check if user is verified
+                    if (data.verified) {
+                        document.getElementById("verificationIcon").style.display = "inline";
+                    }
+                } else {
+                    console.log("Document does not exist!");
+                }
+            }).catch(error => {
+                console.error("Error fetching document:", error);
+            });
+        } else {
+            window.location.href = "go:login";
+        }
+    });
+
+    // Copy to clipboard
+    function copyToClipboard(elementId) {
+        const text = document.getElementById(elementId).innerText;
+        navigator.clipboard.writeText(text).then(() => {
+            showPopup("تم نسخ البيانات إلى الحافظة!");
+        }).catch(err => {
+            console.error('Failed to copy: ', err);
+        });
+    }
+
+    // Show popup
+    function showPopup(message) {
+        document.getElementById("popupMessage").innerText = message;
+        document.getElementById("popup").style.display = "flex";
+    }
+
+    // Close popup
+    function closePopup() {
+        document.getElementById("popup").style.display = "none";
+    }
+
+    // Contact via WhatsApp
+    function contactWhatsApp() {
+        window.location.href = "https://wa.me/905355005063";
+    }
+</script>
+
+</body>
+</html>

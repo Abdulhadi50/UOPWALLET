@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>دعوة الاصدقاء</title>
+    <script src="https://www.gstatic.com/firebasejs/8.3.3/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.3.3/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.3.3/firebase-firestore.js"></script>
+    <style>
+        body {
+            font-family: 'Cairo', sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #fff;
+            text-align: center;
+            direction: rtl;
+            user-select: none;
+        }
+        .container {
+            margin-top: 50px;
+            padding: 20px;
+            display: inline-block;
+            width: 90%;
+            max-width: 350px;
+        }
+        
+        input {
+            width: 80%;
+            padding: 15px;
+            font-size: 15px;
+            border: 1px solid #ccc;
+            border-radius: 15px;
+            outline: none;
+            margin-top: 20px;
+        }
+        
+        input:focus {
+            border-color: #0E43F1;
+        }
+        
+        button {
+            width: 100%;
+            padding: 10px;
+            background: linear-gradient(to right, #0E43F1, #0E43F1);
+            border: none;
+            border-radius: 15px;
+            color: #FFF;
+            font-size: 16px;
+            transition: background-color 0.3s;
+            margin-top: 20px;
+        }
+
+        .code-display {
+            background-color: #f1f1f1;
+            border-radius: 15px;
+            padding: 15px;
+            margin-top: 20px;
+        }
+        
+        /* تصميم النافذة المنبثقة */
+        .popup {
+            display: none;
+            position: fixed;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.6);
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .popup-content {
+            background-color: white;
+            border-radius: 25px;
+            padding: 30px;
+            text-align: center;
+            width: 80%;
+            max-width: 400px;
+            position: relative;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.2);
+        }
+
+        .close-btn {
+            position: absolute;
+            top: 10px;
+            right: 15px;
+            font-size: 24px;
+            color: #000;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h2>دعوة الاصدقاء واحصل على مكافآت لكل دعوة صالحة ستحصل على 5₺</h2>
+        
+        <div class="code-display">
+            <p>كود الإحالة الخاص بك:</p>
+            <span id="referral-code"></span>
+            <button onclick="copyReferralCode()">نسخ الكود</button>
+        </div>
+
+        <input type="text" id="input-referral-code" placeholder="أدخل كود الإحالة" />
+        <button onclick="submitReferralCode()">إدخال كود الإحالة</button>
+        <button onclick="shareReferral()">مشاركة كود الإحالة</button>
+    </div>
+
+    <!-- نافذة منبثقة -->
+    <div class="popup" id="popup">
+        <div class="popup-content">
+            <span class="close-btn" onclick="closePopup()">&times;</span>
+            <p id="popup-message">رسالة منبثقة</p>
+            <button onclick="closePopup()">إغلاق</button>
+        </div>
+    </div>
+
+<script>
+    // إعداد Firebase
+    const firebaseConfig = {
+        apiKey: "AIzaSyADJJPRxJhItXVJ2cEsIymB1WuVVDpQlHI",
+        authDomain: "telegram-mini-app-c3189.firebaseapp.com",
+        projectId: "telegram-mini-app-c3189",
+        storageBucket: "telegram-mini-app-c3189.appspot.com",
+        messagingSenderId: "1078003355289",
+        appId: "1:1078003355289:web:99ce2ce7471a6e5595f208"
+    };
+
+    // تهيئة Firebase
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+
+    // دالة لفتح النافذة المنبثقة
+    function openPopup(message) {
+        document.getElementById('popup-message').innerText = message;
+        document.getElementById('popup').style.display = 'flex';
+    }
+
+    // دالة لإغلاق النافذة المنبثقة
+    function closePopup() {
+        document.getElementById('popup').style.display = 'none';
+    }
+
+    // دالة لنسخ كود الإحالة
+    function copyReferralCode() {
+        const code = document.getElementById("referral-code").innerText;
+        navigator.clipboard.writeText(code).then(() => {
+            openPopup("تم نسخ كود الإحالة بنجاح!");
+        });
+    }
+
+    // دالة لعرض كود الإحالة
+    function displayReferralCode() {
+        firebase.auth().onAuthStateChanged((user) => {
+            if (user) {
+                db.collection("users").doc(user.uid).get().then((doc) => {
+                    if (doc.exists) {
+                        const referralCode = doc.data().referralCode;
+                        document.getElementById("referral-code").innerText = referralCode;
+                    } else {
+                        openPopup("لم يتم العثور على بيانات المستخدم.");
+                    }
+                }).catch((error) => {
+                    openPopup("خطأ: " + error.message);
+                });
+            } else {
+                openPopup("يجب عليك تسجيل الدخول لعرض كود الإحالة.");
+            }
+        });
+    }
+
+    // دالة لإدخال كود الإحالة
+    function submitReferralCode() {
+        const inputCode = document.getElementById("input-referral-code").value.trim();
+        firebase.auth().onAuthStateChanged((user) => {
+            if (user) {
+                db.collection("users").doc(user.uid).get().then((userDoc) => {
+                    if (userDoc.exists) {
+                        // التحقق من أنه لم يتم إدخال كود الإحالة من قبل
+                        if (userDoc.data().referralUsed) {
+                            openPopup("لا يمكنك استرداد كود الإحالة أكثر من مرة.");
+                            return;
+                        }
+
+                        // التحقق من أن المستخدم لا يدخل كود الإحالة الخاص به
+                        const userReferralCode = userDoc.data().referralCode;
+                        if (inputCode === userReferralCode) {
+                            openPopup("لا يمكنك إدخال كود الإحالة الخاص بك.");
+                            return;
+                        }
+
+                        // البحث عن كود الإحالة في قاعدة البيانات
+                        db.collection("users").where("referralCode", "==", inputCode).get().then((querySnapshot) => {
+                            if (!querySnapshot.empty) {
+                                querySnapshot.forEach((doc) => {
+                                    const referrerId = doc.id; // معرف الشخص الذي تم إدخال كوده
+                                    const userDocRef = db.collection("users").doc(user.uid);
+
+                                    // تحديث رصيد المستخدم والداعي
+                                    userDocRef.update({
+                                        balance: firebase.firestore.FieldValue.increment(3), // إضافة 3 رصيد للمدعو
+                                        referralUsed: true // تحديد أنه تم استخدام الكود
+                                    });
+                                    db.collection("users").doc(referrerId).update({
+                                        balance: firebase.firestore.FieldValue.increment(5) // إضافة 5 رصيد للداعي
+                                    });
+
+                                    openPopup("تم إدخال كود الإحالة بنجاح! حصلت على 3 ليرات تركية.");
+                                    document.getElementById("input-referral-code").style.display = 'none'; // إخفاء خانة الإدخال
+                                });
+                            } else {
+                                openPopup("كود الإحالة المدخل غير صحيح.");
+                            }
+                        }).catch((error) => {
+                            openPopup("حدث خطأ أثناء التحقق من كود الإحالة: " + error.message);
+                        });
+                    } else {
+                        openPopup("لم يتم العثور على بيانات المستخدم.");
+                    }
+                }).catch((error) => {
+                    openPopup("خطأ: " + error.message);
+                });
+            } else {
+                openPopup("يجب عليك تسجيل الدخول لإدخال كود الإحالة.");
+            }
+        });
+    }
+
+    // دالة للمشاركة
+    function shareReferral() {
+      const referralCode = document.getElementById("referral-code").innerText;
+      const shareText = `استخدم كود الإحالة الخاص بي: ${referralCode} واحصل على مكافآت عند التسجيل. حمل التطبيق من هنا: https://apk.e-droid.net/apk/app3328540-zo5cdf.apk?v=2`;
+    
+      // تحقق من دعم خاصية المشاركة
+      if (navigator.share) {
+        navigator.share({
+          title: 'تحميل التطبيق',
+          text: shareText,
+          url: 'https://cat-clik.netlify.app/'
+        }).then(() => {
+          openPopup("تمت مشاركة كود الإحالة بنجاح!");
+        }).catch((error) => {
+          openPopup("حدث خطأ أثناء المشاركة: " + error.message);
+        });
+      } else {
+        // إذا لم يكن متاحًا، انسخ النص المعدل إلى الحافظة
+        navigator.clipboard.writeText(shareText).then(() => {
+          openPopup("تم نسخ النص إلى الحافظة. يمكنك مشاركته مع الأصدقاء!");
+        }).catch((error) => {
+          openPopup("حدث خطأ أثناء النسخ: " + error.message);
+        });
+      }
+    }
+
+    // تحقق من تسجيل الدخول عند تحميل الصفحة
+    window.onload = function() {
+        displayReferralCode(); // عرض كود الإحالة عند تحميل الصفحة
+    };
+</script>
+</body>
+</html>

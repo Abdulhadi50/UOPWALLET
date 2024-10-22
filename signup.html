@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>إنشاء حساب</title>
+    <script src="https://www.gstatic.com/firebasejs/8.3.3/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.3.3/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.3.3/firebase-firestore.js"></script>
+    <style>
+        body {
+            font-family: 'Cairo', sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #fff;
+            text-align: center;
+            direction: rtl;
+            user-select: none;
+        }
+        .container {
+            margin-top: 50px;
+            padding: 20px;
+            display: inline-block;
+            width: 90%;
+            max-width: 350px;
+        }
+        
+        input {
+          width: 80%;
+          padding: 15px;
+          font-size: 15px;
+          border: 1px solid #ccc;
+          border-radius: 15px;
+          outline: none;
+          margin-top: 20px;
+        }
+        
+        input:focus {
+          border-color: #0E43F1;
+        }
+        
+        button {
+          width: 100%;
+          padding: 10px;
+          background: linear-gradient(to right, #0E43F1, #0E43F1);
+          border: none;
+          border-radius: 15px;
+          color: #FFF;
+          font-size: 16px;
+          transition: background-color 0.3s;
+          margin-top: 50px;
+        }
+        
+        .whatsapp-btn {
+          margin-top: 20px;
+          background-color: #383E57;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          padding: 10px;
+          border: none;
+          border-radius: 15px;
+          color: white;
+          font-size: 16px;
+          text-align: center;
+          transition: background-color 0.3s;
+        }
+        
+        .whatsapp-btn img {
+          margin-left: 10px;
+          width: 25px;
+          height: 25px;
+        }
+        
+        a {
+            color: #0E43F1;
+            text-decoration: none;
+        }
+        a:hover {
+            text-decoration: underline;
+        }
+
+        /* تصميم النافذة المنبثقة */
+        .popup {
+            display: none;
+            position: fixed;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.6);
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .popup-content {
+            background-color: white;
+            border-radius: 25px;
+            padding: 30px;
+            text-align: center;
+            width: 80%;
+            max-width: 400px;
+            position: relative;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.2);
+        }
+
+        .close-btn {
+            position: absolute;
+            top: 10px;
+            right: 15px;
+            font-size: 24px;
+            color: #000;
+        }
+
+        .popup button {
+          padding: 10px 20px;
+          border: none;
+          border-radius: 15px;
+          background: linear-gradient(to right, #0E43F1, #0E43F1, #0E43F1);
+          color: white;
+          font-size: 16px;
+          margin-top: 15px;
+        
+        }
+        
+        
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h2>إنشاء حساب</h2>
+        <input type="text" id="name" placeholder="أدخل اسمك" required>
+        <input type="email" id="email" placeholder="أدخل البريد الإلكتروني" required>
+        <input type="password" id="password" placeholder="أدخل كلمة المرور" required>
+        <button onclick="signUp()">إنشاء حساب</button>
+        <button class="whatsapp-btn" onclick="contactWhatsApp()">
+          تواصل عبر WhatsApp
+          <img src="https://img.icons8.com/3d-fluency/990/whatsapp.png" alt="WhatsApp Icon">
+        </button>
+        <p>لديك حساب بالفعل؟ <a href="login.html">تسجيل الدخول</a></p>
+    </div>
+    
+
+    <!-- نافذة منبثقة -->
+    <div class="popup" id="popup">
+        <div class="popup-content">
+            <span class="close-btn" onclick="closePopup()">&times;</span>
+            <p id="popup-message">رسالة منبثقة</p>
+            <button onclick="closePopup()">إغلاق</button>
+        </div>
+    </div>
+
+    <script>
+// إعداد Firebase
+const firebaseConfig = {
+    apiKey: "AIzaSyADJJPRxJhItXVJ2cEsIymB1WuVVDpQlHI",
+    authDomain: "telegram-mini-app-c3189.firebaseapp.com",
+    projectId: "telegram-mini-app-c3189",
+    storageBucket: "telegram-mini-app-c3189.appspot.com",
+    messagingSenderId: "1078003355289",
+    appId: "1:1078003355289:web:99ce2ce7471a6e5595f208"
+};
+
+// تهيئة Firebase
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
+
+// دالة لفتح النافذة المنبثقة
+function openPopup(message) {
+    document.getElementById('popup-message').innerText = message;
+    document.getElementById('popup').style.display = 'flex';
+}
+
+// دالة لإغلاق النافذة المنبثقة
+function closePopup() {
+    document.getElementById('popup').style.display = 'none';
+}
+
+// دالة لإنشاء معرف فريد
+function generateUniqueId() {
+    let uniqueId = '55'; // يبدأ بـ 55
+    for (let i = 0; i < 8; i++) {
+        uniqueId += Math.floor(Math.random() * 10); // إضافة 8 أرقام عشوائية
+    }
+    return uniqueId;
+}
+
+// دالة لتوليد كود إحالة عشوائي
+function generateReferralCode() {
+    let code = '';
+    const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+    for (let i = 0; i < 7; i++) {
+        code += characters.charAt(Math.floor(Math.random() * characters.length));
+    }
+    return code;
+}
+
+// دالة لإنشاء حساب
+function signUp() {
+    const nameField = document.getElementById("name");
+    const emailField = document.getElementById("email");
+    const passwordField = document.getElementById("password");
+    
+    const name = nameField.value;
+    const email = emailField.value;
+    const password = passwordField.value;
+
+    // إعادة تعيين الألوان وإزالة الرسائل السابقة
+    nameField.style.borderColor = '';
+    emailField.style.borderColor = '';
+    passwordField.style.borderColor = '';
+    openPopup(""); // إغلاق النافذة المنبثقة في حال كانت مفتوحة
+
+    // التأكد من ملء الحقول
+    if (!name) {
+        nameField.style.borderColor = 'red';
+        openPopup("يجب إدخال اسم.");
+        return;
+    }
+
+    if (!email) {
+        emailField.style.borderColor = 'red';
+        openPopup("يجب إدخال بريد إلكتروني.");
+        return;
+    }
+
+    if (!password) {
+        passwordField.style.borderColor = 'red';
+        openPopup("يجب إدخال كلمة المرور.");
+        return;
+    }
+
+    // التحقق من أن كلمة المرور تحتوي على أحرف وأرقام
+    const passwordRegex = /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{6,}$/; // يجب أن تحتوي على 6 أحرف على الأقل مع أحرف وأرقام
+    if (!passwordRegex.test(password)) {
+        passwordField.style.borderColor = 'red';
+        openPopup("يجب أن تتكون كلمة المرور من 6 أحرف على الأقل، تشمل أرقام وأحرف إنجليزية.");
+        return;
+    }
+
+    // التحقق من وجود البريد الإلكتروني المدخل
+    firebase.auth().fetchSignInMethodsForEmail(email)
+        .then((methods) => {
+            if (methods.length > 0) {
+                emailField.style.borderColor = 'red';
+                openPopup("هذا البريد الإلكتروني مستخدم بالفعل. الرجاء استخدام بريد إلكتروني آخر.");
+            } else {
+                const uniqueId = generateUniqueId(); // توليد المعرف الفريد
+                const referralCode = generateReferralCode(); // توليد كود الإحالة
+
+                firebase.auth().createUserWithEmailAndPassword(email, password)
+                    .then((userCredential) => {
+                        const user = userCredential.user;
+
+                        // حفظ البيانات في Firestore
+                        db.collection("users").doc(user.uid).set({
+                            name: name,
+                            email: email,
+                            uniqueId: uniqueId, // حفظ المعرف الفريد
+                            referralCode: referralCode, // حفظ كود الإحالة
+                            balance: 0, // تخصيص قيمة الرصيد المبدئي
+                            verified: false // إضافة حقل التحقق المبدئي
+                        })
+                        .then(() => {
+                            openPopup("تم إنشاء الحساب وتخزين المعلومات بنجاح!");
+                            setTimeout(() => {
+                                window.location.href = "home.html"; // تحويل المستخدم إلى صفحة تسجيل الدخول
+                            }, 2000);
+                        })
+                        .catch((error) => {
+                            openPopup("حدث خطأ في تخزين المعلومات: " + error.message);
+                        });
+                    })
+                    .catch((error) => {
+                        openPopup("خطأ: " + error.message);
+                    });
+            }
+        })
+        .catch((error) => {
+            openPopup("خطأ: " + error.message);
+        });
+}
+
+function contactWhatsApp() {
+    window.location.href = "https://wa.me/905355005063";
+}
+    </script>
+</body>
+</html>

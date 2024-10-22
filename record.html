@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>سجل عمليات السحب</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+    <style>
+        body {
+            font-family: 'Cairo', sans-serif;
+            direction: rtl;
+            background-color: #fff;
+            padding: 20px;
+            margin: 0;
+        }
+        h1 {
+            text-align: center;
+            color: #333;
+            font-weight: 600;
+            margin-bottom: 20px;
+        }
+        .container {
+            max-width: 600px; /* لتحديد عرض الصفحة */
+            margin: 0 auto; /* لمركزة الصفحة */
+            
+        }
+        .card {
+            padding: 15px;
+            margin-bottom: 15px;
+            border: 0px solid #ddd;
+            border-radius: 35px;
+            background-color: #f9f9f9;
+        }
+        .status {
+            font-weight: bold;
+            padding: 5px 10px;
+            border-radius: 20px;
+            display: inline-block;
+            font-size: 14px;
+            margin-bottom: 10px;
+        }
+        .pending {
+            background-color: #FFEB3B;
+            color: #856404;
+        }
+        .completed {
+            background-color: #4CAF50;
+            color: #fff;
+        }
+        .rejected {
+            background-color: #F44336;
+            color: #fff;
+        }
+        .details {
+            text-align: left;
+            color: #555;
+            font-size: 14px;
+        }
+        .details strong {
+            color: #333;
+        }
+    </style>
+</head>
+<body>
+    <h1>سجل عمليات السحب</h1>
+    <div class="container" id="withdrawHistoryContainer">
+        <!-- سيتم تعبئة البيانات هنا باستخدام JavaScript -->
+    </div>
+
+    <script src="https://www.gstatic.com/firebasejs/8.3.3/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.3.3/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.3.3/firebase-firestore.js"></script>
+
+    <script>
+        // إعدادات Firebase
+        const firebaseConfig = {
+            apiKey: "AIzaSyADJJPRxJhItXVJ2cEsIymB1WuVVDpQlHI",
+            authDomain: "telegram-mini-app-c3189.firebaseapp.com",
+            projectId: "telegram-mini-app-c3189",
+            storageBucket: "telegram-mini-app-c3189.appspot.com",
+            messagingSenderId: "1078003355289",
+            appId: "1:1078003355289:web:99ce2ce7471a6e5595f208"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+        const auth = firebase.auth();
+
+        // جلب سجل عمليات السحب للمستخدم الحالي
+        async function loadWithdrawHistory() {
+            const user = auth.currentUser;
+            if (user) {
+                const userId = user.uid;
+                const withdrawRequestsRef = db.collection('withdrawRequests').where('userId', '==', userId);
+                const snapshot = await withdrawRequestsRef.get();
+                const container = document.getElementById('withdrawHistoryContainer');
+                
+                // إذا لم يكن هناك طلبات سحب
+                if (snapshot.empty) {
+                    container.innerHTML = '<p>لا توجد طلبات سحب متاحة.</p>';
+                    return;
+                }
+
+                snapshot.forEach((doc) => {
+                    const data = doc.data();
+                    
+                    // تحديد لون الحالة بناءً على قيمتها
+                    let statusClass = '';
+                    if (data.status === 'قيد المراجعة') {
+                        statusClass = 'pending';
+                    } else if (data.status === 'مقبول') {
+                        statusClass = 'completed';
+                    } else if (data.status === 'مرفوض') {
+                        statusClass = 'rejected';
+                    }
+
+                    const card = document.createElement('div');
+                    card.classList.add('card');
+                    card.innerHTML = `
+                        <h2 class="status ${statusClass}">${data.status}</h2>
+                        <div class="details">
+                            <p><strong>المبلغ:</strong> ${data.withdrawAmount} ليرة تركية</p>
+                            <p><strong>اسم البنك:</strong> ${data.bankName}</p>
+                            <p><strong>رقم الهاتف:</strong> ${data.phoneNumber}</p>
+                            <p><strong>رقم IBAN:</strong> ${data.iban}</p>
+                            <p><strong>اسم المستفيد:</strong> ${data.beneficiaryName}</p> <!-- إضافة هنا -->
+                        </div>
+                    `;
+                    container.appendChild(card);
+                });
+            } else {
+                alert('يرجى تسجيل الدخول لعرض سجل عمليات السحب.');
+            }
+        }
+
+        // تحميل سجل عمليات السحب عند فتح الصفحة
+        auth.onAuthStateChanged((user) => {
+            if (user) {
+                loadWithdrawHistory();
+            } else {
+                alert('يرجى تسجيل الدخول لعرض السجل.');
+            }
+        });
+    </script>
+</body>
+</html>

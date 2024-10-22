@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>طلب سحب</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+    <style>
+        body {
+            font-family: 'Cairo', sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #fff;
+            text-align: center;
+            direction: rtl;
+            user-select: none;
+        }
+        .container {
+            margin: 50px auto;
+            padding: 20px;
+            display: inline-block;
+            width: 90%;
+            max-width: 350px;
+            
+        }
+
+        input, select {
+            width: 90%;
+            padding: 15px;
+            font-size: 15px;
+            border: 1px solid #ccc;
+            border-radius: 15px;
+            outline: none;
+            margin-top: 35px;
+            transition: border-color 0.3s;
+        }
+
+        input:focus, select:focus {
+            border-color: #0E43F1;
+        }
+
+        button {
+            width: 80%;
+            padding: 10px;
+            background: linear-gradient(to right, #0E43F1, #0E43F1);
+            border: none;
+            border-radius: 15px;
+            color: #FFF;
+            font-size: 16px;
+            transition: background-color 0.3s, transform 0.2s;
+            margin-top: 20px;
+        }
+
+        button:hover {
+            transform: scale(1.05);
+        }
+
+        .balance-info {
+            background-color: #e9ecef;
+            padding: 15px;
+            border-radius: 15px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        
+        .stored-balance {
+            font-weight: bold;
+            font-size: 20px;
+            color: #333;
+        }
+
+        .description {
+            margin-top: 15px;
+            font-size: 14px;
+            color: #777;
+            line-height: 1.5;
+        }
+
+        /* تصميم النافذة المنبثقة */
+        .popup {
+            display: none;
+            position: fixed;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.6);
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .popup-content {
+            background-color: white;
+            border-radius: 25px;
+            padding: 30px;
+            text-align: center;
+            width: 80%;
+            max-width: 400px;
+            position: relative;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.2);
+        }
+
+        .close-btn {
+            position: absolute;
+            top: 10px;
+            right: 15px;
+            font-size: 24px;
+            color: #000;
+        }
+
+        .popup button {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 15px;
+            background: linear-gradient(to right, #0E43F1, #0E43F1);
+            color: white;
+            font-size: 16px;
+            margin-top: 15px;
+        }
+        
+        .popup h2 {
+            font-size: 18px;
+            color: #333;
+        }
+
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="balance-info">
+            <div class="stored-balance" id="balanceDisplay">0.00 ₺</div>
+        </div>
+        <input type="text" id="name" placeholder="اسم المستفيد" required>
+        <input type="text" id="iban" placeholder="IBAN" required>
+        <select id="bankName" required>
+            <option value="" disabled selected>اختر البنك</option>
+            <option value="PAPARA">PAPARA</option>
+            <option value="ZIRAAT BANK">ZIRAAT BANK</option>
+            <option value="AKBANK">AKBANK</option>
+            <option value="Garanti BBVA">Garanti BBVA</option>
+            <option value="İş Bankası">İş Bankası</option>
+            <option value="Halkbank">Halkbank</option>
+            <option value="Yapı Kredi">Yapı Kredi</option>
+            <option value="VakıfBank">VakıfBank</option>
+            <option value="DenizBank">DenizBank</option>
+            <option value="QNB Finansbank">QNB Finansbank</option>
+            <option value="TEB">TEB</option>
+            <option value="ING Bank">ING Bank</option>
+            <option value="Şekerbank">Şekerbank</option>
+            <option value="Anadolu Bank">Anadolu Bank</option>
+            <option value="Odeabank">Odeabank</option>
+            <option value="Burgan Bank">Burgan Bank</option>
+            <option value="Alternatif Bank">Alternatif Bank</option>
+            <option value="UPTION">UPTION</option>
+        </select>
+
+        <input type="number" id="withdrawAmount" placeholder="المبلغ المراد سحبه (50 ليرة تركية كحد أدنى)" required>
+        
+        <input type="tel" id="phoneNumber" placeholder="رقم الهاتف" required>
+        
+        <div class="description">ملاحظة: توجد أجور تحويل في أيام العطلة، وأجرة 10 ليرات تركية.</div>
+
+        <button onclick="submitWithdrawalRequest()">سحب</button>
+        <p id="message"></p>
+    </div>
+
+    <!-- نافذة منبثقة لعرض رسالة السحب -->
+    <div class="popup" id="popup">
+        <div class="popup-content">
+            <span class="close-btn" onclick="closePopup()">&times;</span>
+            <h2 id="popupMessage">تم تقديم طلب السحب بنجاح!</h2>
+            <button onclick="closePopup()">موافق</button>
+        </div>
+    </div>
+
+    <script src="https://www.gstatic.com/firebasejs/8.3.3/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.3.3/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.3.3/firebase-firestore.js"></script>
+
+    <script>
+        // إعدادات Firebase
+        const firebaseConfig = {
+            apiKey: "AIzaSyADJJPRxJhItXVJ2cEsIymB1WuVVDpQlHI",
+            authDomain: "telegram-mini-app-c3189.firebaseapp.com",
+            projectId: "telegram-mini-app-c3189",
+            storageBucket: "telegram-mini-app-c3189.appspot.com",
+            messagingSenderId: "1078003355289",
+            appId: "1:1078003355289:web:99ce2ce7471a6e5595f208"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+        const auth = firebase.auth();
+
+        // جلب رصيد المستخدم عند تحميل الصفحة
+        async function loadUserBalance() {
+          const user = auth.currentUser;
+          if (user) {
+            const userDoc = await db.collection('users').doc(user.uid).get();
+            const balance = userDoc.data().balance || 0;
+
+            let formattedBalance = new Intl.NumberFormat('en-US', {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2
+            }).format(balance);
+
+            document.getElementById('balanceDisplay').innerText = ` ${formattedBalance} ₺`;
+          }
+        }
+
+        async function submitWithdrawalRequest() {
+          const user = auth.currentUser;
+          if (!user) {
+            openPopup("يرجى تسجيل الدخول لتقديم طلب السحب.");
+            return;
+          }
+        
+          const userId = user.uid;
+          const withdrawAmount = parseFloat(document.getElementById('withdrawAmount').value);
+          const beneficiaryName = document.getElementById('name').value;
+          const bankName = document.getElementById('bankName').value;
+          const phoneNumber = document.getElementById('phoneNumber').value;
+          const iban = document.getElementById('iban').value;
+
+          // تحقق من إدخال جميع الحقول
+          if (!beneficiaryName || !iban || !withdrawAmount || !bankName || !phoneNumber) {
+            openPopup("يرجى ملء جميع الحقول.");
+            return;
+          }
+        
+          // تحقق من الحد الأدنى للسحب
+          if (withdrawAmount < 50) {
+            openPopup("يجب أن يكون المبلغ المراد سحبه 50 ليرة تركية كحد أدنى.");
+            return;
+          }
+        
+          // جلب رصيد المستخدم من Firestore
+          const userDoc = await db.collection('users').doc(userId).get();
+          const currentBalance = userDoc.data().balance;
+        
+          if (currentBalance < withdrawAmount) {
+            openPopup("رصيدك غير كافٍ.");
+            return;
+          }
+        
+          // إنشاء طلب السحب
+          await db.collection('withdrawRequests').add({
+            userId: userId,
+            withdrawAmount: withdrawAmount,
+            bankName: bankName,
+            phoneNumber: phoneNumber,
+            iban: iban,
+            beneficiaryName: beneficiaryName, // تغيير هنا لإرسال اسم المستفيد
+            status: 'قيد المراجعة', // حالة الطلب الافتراضية
+            createdAt: firebase.firestore.FieldValue.serverTimestamp()
+          });
+        
+          // خصم المبلغ من رصيد المستخدم
+          await db.collection('users').doc(userId).update({
+            balance: currentBalance - withdrawAmount
+          });
+        
+          openPopup("تم تقديم طلب السحب بنجاح! سيتم مراجعة طلبك في أقرب وقت ممكن.");
+          document.getElementById('withdrawAmount').value = '';
+          document.getElementById('bankName').value = '';
+          document.getElementById('phoneNumber').value = '';
+          document.getElementById('iban').value = '';
+          loadUserBalance(); // إعادة تحميل الرصيد بعد السحب
+        }
+
+        function openPopup(message) {
+            document.getElementById('popupMessage').innerText = message;
+            document.getElementById('popup').style.display = 'flex';
+        }
+
+        function closePopup() {
+            document.getElementById('popup').style.display = 'none';
+        }
+
+        // تحميل الرصيد عند فتح الصفحة
+        auth.onAuthStateChanged((user) => {
+            if (user) {
+                loadUserBalance();
+            } else {
+                document.getElementById('balanceDisplay').innerText = "يرجى تسجيل الدخول.";
+            }
+        });
+    </script>
+</body>
+</html>

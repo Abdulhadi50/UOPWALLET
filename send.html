@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>إرسال الأموال</title>
+  <script src="https://www.gstatic.com/firebasejs/8.3.3/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.3.3/firebase-auth.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.3.3/firebase-firestore.js"></script>
+  <style>
+    body {
+      font-family: 'Cairo', sans-serif;
+      margin: 0;
+      padding: 0;
+      background-color: #fff;
+      text-align: center;
+      direction: rtl;
+      user-select: none;
+    }
+    .container {
+      margin-top: 50px;
+      padding: 20px;
+      display: inline-block;
+      width: 90%;
+      max-width: 350px;
+    }
+    
+    input {
+      width: 80%;
+      padding: 15px;
+      font-size: 15px;
+      border: 1px solid #ccc;
+      border-radius: 15px;
+      outline: none;
+      margin-top: 20px;
+    }
+    
+    input:focus {
+      border-color: #0E43F1;
+    }
+    
+    button {
+      width: 100%;
+      padding: 10px;
+      background: linear-gradient(to right, #0E43F1, #0E43F1);
+      border: none;
+      border-radius: 15px;
+      color: #FFF;
+      font-size: 16px;
+      transition: background-color 0.3s;
+      margin-top: 50px;
+    }
+    
+    /* تصميم النافذة المنبثقة */
+    .popup {
+      display: none;
+      position: fixed;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.6);
+      justify-content: center;
+      align-items: center;
+      z-index: 1000;
+    }
+
+    .popup-content {
+      background-color: white;
+      border-radius: 25px;
+      padding: 30px;
+      text-align: center;
+      width: 80%;
+      max-width: 400px;
+      position: relative;
+      box-shadow: 0 0 20px rgba(0, 0, 0, 0.2);
+    }
+
+    .close-btn {
+      position: absolute;
+      top: 10px;
+      right: 15px;
+      font-size: 24px;
+      color: #000;
+    }
+
+    .popup button {
+      padding: 10px 20px;
+      border: none;
+      border-radius: 15px;
+      background: linear-gradient(to right, #0E43F1, #0E43F1, #0E43F1);
+      color: white;
+      font-size: 16px;
+      margin-top: 15px;
+    }
+
+    #receiverName {
+      font-size: 14px;
+      color: #0E43F1;
+    }
+
+    #receiverName.error {
+      color: red;
+    }
+
+    .verified-icon {
+      width: 16px; /* عرض الصورة */
+      height: 16px; /* ارتفاع الصورة */
+      vertical-align: middle; /* محاذاة الصورة مع النص */
+      margin-right: 5px; /* مسافة بين الصورة والنص */
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+    <h2>إرسال الأموال</h2>
+    <input type="text" id="receiverId" placeholder="أدخل UID للمستلم" required>
+    <p id="receiverName"></p> <!-- عنصر لعرض اسم المستلم -->
+    <input type="number" id="amount" placeholder="أدخل المبلغ لإرساله" required min="1">
+    <button id="sendButton" onclick="sendBalance()">إرسال</button>
+    <div id="loading" style="display: none;">
+      <img src="https://img.icons8.com/ios-glyphs/990/F9A028/stopwatch.png" alt="Loading" style="width: 30px; height: 30px; vertical-align: middle;">
+      جاري الإرسال...
+    </div>
+
+  <!-- نافذة منبثقة -->
+  <div class="popup" id="popup">
+    <div class="popup-content">
+      <span class="close-btn" onclick="closePopup()">×</span>
+      <p id="popup-message">رسالة منبثقة</p>
+      <button onclick="closePopup()">إغلاق</button>
+    </div>
+  </div>
+
+  <script>
+// إعداد Firebase
+const firebaseConfig = {
+  apiKey: "AIzaSyADJJPRxJhItXVJ2cEsIymB1WuVVDpQlHI",
+  authDomain: "telegram-mini-app-c3189.firebaseapp.com",
+  projectId: "telegram-mini-app-c3189",
+  storageBucket: "telegram-mini-app-c3189.appspot.com",
+  messagingSenderId: "1078003355289",
+  appId: "1:1078003355289:web:99ce2ce7471a6e5595f208"
+};
+
+// تهيئة Firebase
+firebase.initializeApp(firebaseConfig);
+
+// إعداد Firestore
+const db = firebase.firestore();
+
+// دالة لفتح النافذة المنبثقة
+function openPopup(message) {
+  document.getElementById('popup-message').innerText = message;
+  document.getElementById('popup').style.display = 'flex';
+}
+
+// دالة لإغلاق النافذة المنبثقة
+function closePopup() {
+  document.getElementById('popup').style.display = 'none';
+}
+
+// دالة للتحقق من تسجيل الدخول
+firebase.auth().onAuthStateChanged((user) => {
+  if (user) {
+    console.log("المستخدم مسجل الدخول: ", user.uid);
+  } else {
+    openPopup("يجب تسجيل الدخول لإرسال الاموال.");
+    setTimeout(() => {
+      window.location.href = "login.html";
+    }, 2000);
+  }
+});
+
+// دالة لعرض اسم المستخدم عند إدخال المعرف
+document.getElementById('receiverId').addEventListener('input', async function () {
+  const receiverId = this.value;
+  const receiverNameElement = document.getElementById('receiverName');
+
+  if (receiverId.length >= 2) { // التأكد من وجود على الأقل حرفين في المعرف
+    const receiverDocRef = db.collection("users").where("uniqueId", "==", receiverId).limit(1);
+
+    try {
+      const receiverSnapshot = await receiverDocRef.get();
+
+      if (!receiverSnapshot.empty) {
+        const receiverDoc = receiverSnapshot.docs[0];
+        const receiverName = receiverDoc.data().name;
+        const isVerified = receiverDoc.data().verified; // تحقق من خاصية التحقق
+        receiverNameElement.innerHTML = "اسم المستلم: " + receiverName;
+        
+        // إضافة علامة التحقق إذا كان الحساب متحققًا
+        if (isVerified) {
+          receiverNameElement.innerHTML += 
+            ` <img src="https://img.icons8.com/material-rounded/999/0E43F1/verified-account.png" class="verified-icon" alt="Verified">`;
+        }
+        
+        receiverNameElement.classList.remove("error");
+      } else {
+        receiverNameElement.innerText = "المستلم غير موجود";
+        receiverNameElement.classList.add("error");
+      }
+    } catch (error) {
+      console.error("حدث خطأ أثناء البحث عن المستخدم: ", error);
+      receiverNameElement.innerText = "حدث خطأ، يرجى المحاولة مرة أخرى.";
+      receiverNameElement.classList.add("error");
+    }
+  } else {
+    receiverNameElement.innerText = ""; // تفريغ النص إذا كانت الخانة فارغة أو المعرف قصير جدًا
+  }
+});
+
+// دالة لإرسال الاموال
+// دالة لإرسال الأموال
+async function sendBalance() {
+  const receiverId = document.getElementById("receiverId").value;
+  const amount = parseFloat(document.getElementById("amount").value);
+
+  const sendButton = document.getElementById("sendButton");
+  const loadingElement = document.getElementById("loading");
+
+  // تعطيل الزر وعرض دائرة التحميل
+  sendButton.disabled = true;
+  loadingElement.style.display = "block";
+
+  const user = firebase.auth().currentUser;
+
+  if (user) {
+    // التحقق من أن الحقول ليست فارغة
+    if (!receiverId || isNaN(amount) || amount <= 0) {
+      openPopup("يرجى ملء جميع الحقول بشكل صحيح.");
+      resetForm(sendButton, loadingElement); // إعادة تهيئة المدخلات
+      return;
+    }
+
+    // التحقق من الحد الأدنى للمبلغ
+    if (amount < 0.01) {
+      openPopup("يجب أن يكون المبلغ المدخل 0.01 أو أكثر.");
+      resetForm(sendButton, loadingElement); // إعادة تهيئة المدخلات
+      return;
+    }
+
+    const senderDocRef = db.collection("users").doc(user.uid);
+    const receiverDocRef = db.collection("users").where("uniqueId", "==", receiverId).limit(1);
+
+    try {
+      const senderSnapshot = await senderDocRef.get();
+      const senderBalance = senderSnapshot.data().balance;
+
+      const receiverSnapshot = await receiverDocRef.get();
+
+      if (receiverSnapshot.empty) {
+        openPopup("المستلم غير موجود. تحقق من UID.");
+        resetForm(sendButton, loadingElement); // إعادة تهيئة المدخلات
+        return;
+      }
+
+      const receiverDoc = receiverSnapshot.docs[0];
+      const receiverBalance = receiverDoc.data().balance;
+
+      if (senderBalance < amount) {
+        openPopup("ليس لديك أموال كافٍ لإجراء هذه العملية.");
+        resetForm(sendButton, loadingElement); // إعادة تهيئة المدخلات
+        return;
+      }
+
+      if (user.uid === receiverDoc.id) {
+        openPopup("لا يمكنك إرسال الأموال لنفسك.");
+        resetForm(sendButton, loadingElement); // إعادة تهيئة المدخلات
+        return;
+      }
+
+      const newSenderBalance = senderBalance - amount;
+      const newReceiverBalance = receiverBalance + amount;
+
+      await senderDocRef.update({ balance: newSenderBalance });
+      await db.collection("users").doc(receiverDoc.id).update({ balance: newReceiverBalance });
+
+      // إظهار رسالة النجاح بعد انتهاء العملية
+      setTimeout(() => {
+        openPopup("تم إرسال الأموال بنجاح!");
+        resetForm(sendButton, loadingElement); // إعادة تهيئة المدخلات بعد النجاح
+      }, 1000); // تأخير لمدة 1000 مللي ثانية قبل إظهار النجاح
+    } catch (error) {
+      console.error("حدث خطأ أثناء إرسال الأموال: ", error);
+      openPopup("حدث خطأ، يرجى المحاولة مرة أخرى.");
+      resetForm(sendButton, loadingElement); // إعادة تهيئة المدخلات
+    }
+  } else {
+    openPopup("يجب تسجيل الدخول لإرسال الأموال.");
+    resetForm(sendButton, loadingElement); // إعادة تهيئة المدخلات
+  }
+}
+
+// دالة لإعادة تهيئة المدخلات
+function resetForm(sendButton, loadingElement) {
+  document.getElementById("receiverId").value = "";
+  document.getElementById("amount").value = "";
+  document.getElementById("receiverName").innerText = "";
+  loadingElement.style.display = "none"; // إخفاء دائرة التحميل
+  sendButton.disabled = false; // إعادة تمكين الزر
+}
+</script>
+</body>
+</html>

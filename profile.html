@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>الملف الشخصي</title>
+    <script src="https://www.gstatic.com/firebasejs/8.3.3/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.3.3/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.3.3/firebase-firestore.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #fff;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+        .profile-container {
+            background-color: #fff;
+            width: 350px;
+            padding: 10px;
+        }
+        .profile-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        .profile-header h2 {
+            font-size: 18px;
+            color: #333;
+        }
+        .verification-icon {
+            width: 20px;
+            height: 20px;
+        }
+        .profile-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding: 10px;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            background-color: #fafafa;
+        }
+        .profile-item label {
+            font-size: 14px;
+            color: #555;
+        }
+        .copy-icon, .edit-icon {
+            cursor: pointer;
+            width: 20px;
+            height: 20px;
+        }
+        .button {
+            width: 100%;
+            background-color: #0E43F1;
+            color: white;
+            padding: 10px 0;
+            text-align: center;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+        .button:hover {
+            background-color: #0c3ac1;
+        }
+        .verify-button {
+            width: 100%;
+            background-color: #FF5722;
+            color: white;
+            padding: 10px 0;
+            text-align: center;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+        .verify-button.verified {
+            background-color: #4CAF50; /* أخضر */
+        }
+        .popup {
+            display: none;
+            position: fixed;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.6);
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .popup button {
+          padding: 10px 20px;
+          border: none;
+          border-radius: 15px;
+          background: linear-gradient(to right, #0E43F1, #0E43F1, #0E43F1);
+          color: white;
+          font-size: 16px;
+          margin-top: 15px;
+        }
+        
+        .popup-content {
+            background-color: white;
+            border-radius: 15px;
+            padding: 30px;
+            text-align: center;
+            width: 80%;
+            max-width: 400px;
+            position: relative;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.2);
+        }
+        .close-btn {
+            position: absolute;
+            top: 10px;
+            right: 15px;
+            font-size: 24px;
+            color: #000;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+
+<div class="profile-container">
+    <!-- Header -->
+    <div class="profile-header">
+        <h2 id="username">اسم المستخدم</h2>
+        <img src="https://img.icons8.com/material-rounded/999/0E43F1/verified-account.png" class="verification-icon" id="verificationIcon" style="display: none;" />
+    </div>
+
+    <!-- User ID with Copy -->
+    <div class="profile-item">
+        <label>معرف المستخدم</label>
+        <div>
+            <span id="uniqueId">UID</span>
+            <img src="https://img.icons8.com/ios-glyphs/999/copy.png" class="copy-icon" onclick="copyToClipboard()" />
+        </div>
+    </div>
+
+    <!-- Email with Edit -->
+    <div class="profile-item">
+        <label>البريد الإلكتروني</label>
+        <div>
+            <span id="email">user@example.com</span>
+            <img src="https://img.icons8.com/ios/999/edit.png" class="edit-icon" onclick="sendEmailChange()" />
+        </div>
+    </div>
+
+    <!-- Password Change -->
+    <div class="profile-item">
+        <label>كلمة المرور</label>
+        <button class="button" onclick="sendPasswordReset()">تغيير كلمة المرور</button>
+    </div>
+
+    <!-- Verify Email Button -->
+    <button class="verify-button" id="verifyButton" onclick="verifyEmail()">تحقق من البريد الإلكتروني</button>
+
+    <!-- Logout Button -->
+    <button class="button" onclick="logout()">تسجيل الخروج</button>
+</div>
+
+<!-- Popup -->
+<div class="popup" id="popup">
+    <div class="popup-content">
+        <span class="close-btn" onclick="closePopup()">&times;</span>
+        <p id="popupMessage">تم نسخ UID إلى الحافظة!</p>
+        <button onclick="closePopup()">موافق</button>
+    </div>
+</div>
+
+<script>
+    // Firebase Configuration
+    const firebaseConfig = {
+      apiKey: "AIzaSyADJJPRxJhItXVJ2cEsIymB1WuVVDpQlHI",
+      authDomain: "telegram-mini-app-c3189.firebaseapp.com",
+      projectId: "telegram-mini-app-c3189",
+      storageBucket: "telegram-mini-app-c3189.appspot.com",
+      messagingSenderId: "1078003355289",
+      appId: "1:1078003355289:web:99ce2ce7471a6e5595f208"
+    };
+
+    // Initialize Firebase
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const db = firebase.firestore();
+
+    // Get current user and update UI
+    auth.onAuthStateChanged(user => {
+        if (user) {
+            const uid = user.uid;
+
+            // Fetch user data from Firestore
+            db.collection("users").doc(uid).get().then(doc => {
+                if (doc.exists) {
+                    const data = doc.data();
+                    document.getElementById("username").innerText = data.name;
+                    document.getElementById("uniqueId").innerText = data.uniqueId;
+                    document.getElementById("email").innerText = user.email;
+
+                    // Check if email is verified
+                    if (user.emailVerified) {
+                        document.getElementById("verifyButton").innerText = "البريد الإلكتروني تم التحقق منه";
+                        document.getElementById("verifyButton").classList.add("verified");
+                        document.getElementById("verifyButton").disabled = true;
+                    }
+
+                    if (data.verified) {
+                        document.getElementById("verificationIcon").style.display = "inline";
+                    }
+                } else {
+                    console.log("Document does not exist!");
+                }
+            }).catch(error => {
+                console.error("Error fetching document:", error);
+            });
+        } else {
+            window.location.href = "go:login";
+        }
+    });
+
+    // Copy UID to clipboard
+    function copyToClipboard() {
+        const uniqueId = document.getElementById("uniqueId").innerText;
+        navigator.clipboard.writeText(uniqueId).then(() => {
+            showPopup("تم نسخ UID إلى الحافظة!");
+        }).catch(err => {
+            console.error('Failed to copy: ', err);
+        });
+    }
+
+    // Send email change link
+    function sendEmailChange() {
+        const email = document.getElementById("email").innerText;
+        const actionCodeSettings = {
+            url: 'https://yourapp.com/finishEmailChange',
+            handleCodeInApp: true
+        };
+
+        auth.currentUser.verifyBeforeUpdateEmail(email, actionCodeSettings).then(() => {
+            showPopup("تم إرسال رابط تغيير البريد الإلكتروني إلى " + email);
+        }).catch(error => {
+            console.error("Error sending email change link:", error);
+        });
+    }
+
+    // Send password reset email
+    function sendPasswordReset() {
+        const email = auth.currentUser.email;
+        auth.sendPasswordResetEmail(email).then(() => {
+            showPopup("تم إرسال رابط إعادة تعيين كلمة المرور إلى " + email);
+        }).catch(error => {
+            console.error("Error sending password reset email:", error);
+        });
+    }
+
+    // Verify email
+    function verifyEmail() {
+        auth.currentUser.sendEmailVerification().then(() => {
+            showPopup("تم إرسال رابط التحقق من البريد الإلكتروني إلى " + auth.currentUser.email);
+        }).catch(error => {
+            console.error("Error sending verification email:", error);
+        });
+    }
+
+    // Logout user
+    function logout() {
+        auth.signOut().then(() => {
+            window.location.href = "go:login";
+        }).catch(error => {
+            console.error("Error signing out:", error);
+        });
+    }
+
+    // Show popup
+    function showPopup(message) {
+        document.getElementById("popupMessage").innerText = message;
+        document.getElementById("popup").style.display = "flex";
+    }
+
+    // Close popup
+    function closePopup() {
+        document.getElementById("popup").style.display = "none";
+    }
+</script>
+
+</body>
+</html>

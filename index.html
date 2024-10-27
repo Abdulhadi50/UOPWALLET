@@ -14,19 +14,22 @@
             box-sizing: border-box;
         }
         body {
-            font-family: 'Arial', sans-serif;
-            background-color: #000;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            user-select: none;
-        }
-        .container {
-            width: 400px;
-            padding: 20px;
-            margin-top: -300px;
-        }
+    font-family: 'Arial', sans-serif;
+    background-color: #000;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start; /* جعل المحتوى يبدأ من الأعلى */
+    min-height: 100vh; /* استخدام min-height للسماح بالتمرير */
+    user-select: none;
+    overflow-y: auto; /* تمكين التمرير العمودي */
+}
+
+.container {
+    width: 400px;
+    padding: 20px;
+    margin-top: 100px; /* تغيير الهامش العلوي */
+    /* يمكنك إضافة ارتفاع محدد إذا كنت تريد */
+}
         .profile {
             margin-bottom: 20px;
             text-align: center;

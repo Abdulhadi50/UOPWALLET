@@ -7,7 +7,7 @@
     <script src="https://www.gstatic.com/firebasejs/8.3.3/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.3.3/firebase-auth.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.3.3/firebase-firestore.js"></script>
-    <style>
+     <style>
         * {
             margin: 0;
             padding: 0;
@@ -15,7 +15,7 @@
         }
         body {
             font-family: 'Arial', sans-serif;
-            background-color: #fff;
+            background-color: #000;
             display: flex;
             justify-content: center;
             align-items: center;
@@ -33,12 +33,12 @@
         }
         .profile h2 {
             font-size: 20px;
-            color: #333;
+            color: #fff;
             display: inline; /* لعرض الصورة بجانب الاسم */
         }
         .profile p {
             font-size: 15px;
-            color: #888;
+            color: #8a8a8a;
         }
         .copy-icon {
             width: 20px;
@@ -47,20 +47,20 @@
         }
         .balance-container {
             text-align: center;
-            background-color: #f9f9f9;
+            background-color: #1C1D22;
             padding: 20px;
             border-radius: 10px;
             margin-top: 40px;
         }
         .balance-container h3 {
             font-size: 18px;
-            color: #555;
+            color: #777;
         }
         .balance-container .balance {
             font-size: 25px;
             font-weight: bold;
             margin-top: 10px;
-            color: #000;
+            color: #fff;
         }
         .balance-container .currency {
             font-size: 16px;
@@ -72,15 +72,19 @@
             margin-top: 20px;
         }
         button {
-            background-color: #0E43F1;
+            background-color: #1C1D22;
             color: white;
-            padding: 10px 15px;
+            padding: 5px 10px;
             border: none;
-            border-radius: 15px;
+            border-radius: 50px;
             transition: background 0.3s;
-            width: 48%; /* لتناسب الزرين جنباً إلى جنب */
+            width: 20%; /* لتناسب الزرين جنباً إلى جنب */
         }
         
+        button img {
+          width: 30px;
+            height: 30px;
+        }
         /* CSS Popup */
         .popup {
             display: none;
@@ -95,7 +99,7 @@
             z-index: 1000;
         }
         .popup-content {
-            background-color: white;
+            background-color: #1C1D22;
             border-radius: 25px;
             padding: 30px;
             text-align: center;
@@ -103,19 +107,20 @@
             max-width: 400px;
             position: relative;
             box-shadow: 0 0 20px rgba(0, 0, 0, 0.2);
+            color: #fff;
         }
         .close-btn {
             position: absolute;
             top: 10px;
             right: 15px;
             font-size: 24px;
-            color: #000;
+            color: #fff;
         }
         .popup button {
-            padding: 8px 15px;
+            padding: 5px 10px;
             border: none;
             border-radius: 15px;
-            background: linear-gradient(to right, #0E43F1, #0E43F1, #0E43F1);
+            background: linear-gradient(to right, #3EDAB3, #3EDAB3, #3EDAB3);
             color: white;
             font-size: 16px;
             margin-top: 15px;
@@ -124,50 +129,6 @@
         .verification-icon {
           margin-left: 5px;
         }
-        
-    .nav-container {
-    position: fixed;
-    bottom: 15px;
-    left: 5%;
-    right: 5%;
-    background-color: #0E43F1;
-    padding: 10px 0;
-    border-radius: 20px;
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
-    width: 90%; /* عرض الكونتينر */
-    height: 60px; /* ارتفاع الكونتينر */
-}
-
-.nav {
-    display: flex;
-    justify-content: space-around;
-    max-width: 100%; /* استخدام 100% للسماح بالتقلص */
-    margin: 0 auto;
-}
-
-.nav button {
-    font-family: 'Rubik', sans-serif;
-    background-color: transparent;
-    color: white;
-    border: none;
-    text-align: center;
-    flex: 1;
-    font-size: 14px;
-}
-
-.nav button img {
-    display: block;
-    margin: 0 auto;
-    width: 30px;
-    height: 30px;
-    margin-top: -6px;
-}
-
-.nav button span {
-    display: block;
-    padding: 10px;
-    margin-top: -10px;
-}
 
 .icon-container {
     display: flex;
@@ -178,7 +139,7 @@
 }
 
 .icon {
-    background-color: #e3f2fd; /* لون خلفية */
+    background-color: #1C1D22; /* لون خلفية */
     padding: 10px;
     border-radius: 10px;
     transition: background 0.3s;
@@ -195,51 +156,107 @@
     height: 24px;
 }
 
+.nav-container {
+            position: fixed;
+            bottom: 15px;
+            left: 5%;
+            right: 5%;
+            background-color: #1e2126;
+            border-radius: 10px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+            padding: 10px 0;
+        }
+        .nav {
+            display: flex;
+            justify-content: space-around;
+        }
+        .nav button {
+            background-color: transparent;
+            color: #e0e0e0;
+            border: none;
+            font-size: 14px;
+        }
+        .nav button img {
+            width: 30px;
+            height: 30px;
+        }
+
+        /* تعديل الأيقونات */
+        .icon-container {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 20px;
+        }
+
+        /* المستطيل أسفل الأزرار */
+        .rectangle {
+            background-color: #3EDAB3;
+            height: 50px;
+            border-radius: 10px;
+            margin-top: 20px; /* المسافة بين الأزرار والمستطيل */
+            text-align: center;
+            line-height: 50px; /* لجعل النص في المنتصف عمودياً */
+            color: white;
+            font-size: 18px;
+        }
+
     </style>
 </head>
 <body>
   
 <!-- قسم الأيقونات العلوية -->
 <div class="container">
-  
-  <!-- قسم الأيقونات العلوية -->
-  <div class="icon-container">
-    <div class="icon" onclick="navigateTo('profile.html')">
-      <img src="https://img.icons8.com/ios-filled/999/0E43F1/user.png">
-    </div>
-    <div class="icon" onclick="navigateTo('settings.html')">
-      <img src="https://img.icons8.com/ios-filled/999/0E43F1/settings.png">
-    </div>
-
-  </div>
-  
-    <!-- قسم المعلومات الشخصية -->
-    <div class="profile">
-      <h2 id="username">your name</h2>
-      <img src="https://img.icons8.com/material-rounded/999/0E43F1/verified-account.png" class="verification-icon" alt="Verified" style="width: 20px; height: 20px; vertical-align: middle; display: none;" id="verificationIcon" />
-      <p> UID: <span id="uniqueId">Your ID</span>
-        <img src="https://img.icons8.com/ios-glyphs/999/copy.png" class="copy-icon" onclick="copyToClipboard()" />
-      </p>
-    </div>
-
-    <!-- قسم الرصيد -->
-    <div class="balance-container">
+    
+      <!-- قسم الأيقونات العلوية -->
+      <div class="icon-container">
+        <div class="icon" onclick="navigateTo('go:profile')">
+          <img src="https://img.icons8.com/ios-filled/999/3EDAB3/user.png">
+        </div>
+        <div class="icon" onclick="navigateTo('go:mene')">
+          <img src="https://img.icons8.com/ios-filled/999/3EDAB3/settings.png">
+        </div>
+    
+      </div>
+    
+      <!-- قسم المعلومات الشخصية -->
+      <div class="profile">
+        <h2 id="username">your name</h2>
+        <img src="https://img.icons8.com/material-rounded/999/3EDAB3/verified-account.png" class="verification-icon" alt="Verified" style="width: 20px; height: 20px; vertical-align: middle; display: none;" id="verificationIcon" />
+        <p> UID: <span id="uniqueId">Your ID</span>
+          <img src="https://img.icons8.com/ios-glyphs/999/ffffff/copy.png" class="copy-icon" onclick="copyToClipboard()" />
+        </p>
+      </div>
+    
+      <!-- قسم الرصيد -->
+      <div class="balance-container">
         <h3>رصيدك الحالي</h3>
         <div class="balance" id="balance">₺0.00</div>
         <div class="currency">الليرة التركية</div>
-    </div>
+      </div>
     
-    <!-- أزرار الإيداع والسحب -->
-    <div class="button-container">
-        <button id="depositButton" onclick="location.href='deposit.html'">إيداع</button>
-        <button id="withdrawButton" onclick="location.href='withdraw.html'">سحب</button>
+      <!-- أزرار الإيداع والسحب -->
+      <div class="button-container">
+        <button id="depositButton" onclick="location.href='go:send'">
+          <img src="https://img.icons8.com/ios-filled/999/3EDAB3/sent.png">
+        </button>
+        <button id="withdrawButton" onclick="location.href='go:deposit'">
+          <img src="https://img.icons8.com/color-glass/999/money-circulation.png">
+        </button>
+        <button id="withdrawButton" onclick="location.href='go:withdraw'">
+          <img src="https://img.icons8.com/color-glass/999/refund-2.png">
+        </button>
+        <button id="withdrawButton" onclick="location.href='go:world'">
+          <img src="https://img.icons8.com/material-outlined/999/3EDAB3/geography.png">
+        </button>
+      </div>
+    
+      <!-- المستطيل أسفل الأزرار -->
+      <div class="rectangle">هذا هو المستطيل المضاف</div>
     </div>
-</div>
-
 <!-- Popup -->
 <div class="popup" id="popup">
     <div class="popup-content">
-        <span class="close-btn" onclick="closePopup()">&times;</span>
+        <span class="close-btn" onclick="closePopup()">×</span>
         <p id="popupMessage">تم نسخ UID إلى الحافظة!</p>
         <button onclick="closePopup()">موافق</button>
     </div>
@@ -247,20 +264,17 @@
 
 <div class="nav-container">
   <div class="nav">
-    <button onclick="navigateTo('redeem.html')" class="active">
+    <button onclick="navigateTo('go:redeem')" class="active">
       <img src="https://img.icons8.com/ios-glyphs/999/ffffff/bank-card-back-side.png">
     </button>
-    <button onclick="navigateTo('record.html')" class="active">
+    <button onclick="navigateTo('go:record')" class="active">
       <img src="https://img.icons8.com/pixels/999/ffffff/book.png">
     </button>
-    <button onclick="navigateTo('referral.html')">
+    <button onclick="navigateTo('go:referral')">
       <img src="https://img.icons8.com/ios-glyphs/999/ffffff/omnichannel.png">
     </button>
-    <button onclick="navigateTo('send.html')">
-      <img src="https://img.icons8.com/ios-filled/999/ffffff/sent.png">
-    </button>
     <button onclic="navigateTo('home.html')">
-      <img src="https://img.icons8.com/material-rounded/999/ffffff/home.png">
+      <img src="https://img.icons8.com/material-rounded/999/3EDAB3/home.png">
     </button>
   </div>
 </div>
@@ -307,7 +321,7 @@
           console.error("خطأ في جلب البيانات:", error);
         });
       } else {
-        window.location.href = "login.html"; // إعادة توجيه المستخدم إذا لم يكن مسجلاً
+        window.location.href = "go:login"; // إعادة توجيه المستخدم إذا لم يكن مسجلاً
       }
     });
     

